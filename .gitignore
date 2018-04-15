@@ -1,1 +1,6 @@
 .idea/
+bin
+vendor/
+
+# Serverless directories
+.serverless
