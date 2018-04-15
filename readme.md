@@ -1,3 +1,4 @@
-# Amazon Alexa Skill by Golang
+# Amazon Lambda Function by Golang
 
 ## About
+* send Gmail
