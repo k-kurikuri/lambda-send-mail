@@ -1,29 +1,85 @@
 package main
 
 import (
+	"context"
+	"encoding/base64"
 	"github.com/aws/aws-lambda-go/lambda"
-	"strconv"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	"google.golang.org/api/gmail/v1"
+	"log"
+	"os"
+	"time"
 )
 
-type Request struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
-}
+const (
+	rfc2822 = "Mon Jan 02 15:04:05 -0700 2006"
+)
 
 type Response struct {
 	Message string `json:"message"`
 }
 
-func Handler(request Request) (Response, error) {
-	id := request.ID
-	name := request.Name
-	msgPrefix := strconv.Itoa(id) + " : " + name
+func main() {
+	lambda.Start(Handler)
+}
+
+// lambda handler
+func Handler() (Response, error) {
+	config := getOAuthConfig()
+	token := getOAuthToken()
+	client := config.Client(context.TODO(), &token)
+
+	srv, err := gmail.New(client)
+	if err != nil {
+		log.Fatalf("Unable to retrieve gmail Client %v", err)
+	}
+
+	emailContent := getEmailContent()
+
+	message := gmail.Message{
+		Raw:      base64.URLEncoding.EncodeToString([]byte(emailContent)),
+		LabelIds: []string{"INBOX"},
+	}
+
+	m, err := srv.Users.Messages.Send("me", &message).Do()
+	if err != nil {
+		log.Fatalf("Unable to insert messages. %v", err)
+	}
 
 	return Response{
-		Message: msgPrefix + " Go Serverless v1.0! Your function executed successfully!",
+		Message: m.Id + " Gmail Send executed successfully!",
 	}, nil
 }
 
-func main() {
-	lambda.Start(Handler)
+func getOAuthConfig() oauth2.Config {
+	return oauth2.Config{
+		ClientID:     os.Getenv("CLIENT_ID"),
+		ClientSecret: os.Getenv("CLIENT_SECRET"),
+		Endpoint:     google.Endpoint,
+		RedirectURL:  os.Getenv("REDIRECT_URL"),
+		Scopes:       []string{os.Getenv("SCOPES")},
+	}
+}
+
+func getOAuthToken() oauth2.Token {
+	expiry, _ := time.Parse("2006-01-02", "2018-04-16")
+
+	return oauth2.Token{
+		AccessToken:  os.Getenv("ACCESS_TOKEN"),
+		TokenType:    os.Getenv("TOKEN_TYPE"),
+		RefreshToken: os.Getenv("REFRESH_TOKEN"),
+		Expiry:       expiry,
+	}
+}
+
+func getEmailContent() string {
+	emailDate := time.Now().Format(rfc2822)
+
+	return "Date: " + emailDate + "\r\n" +
+		"From: " + os.Getenv("EMAIL_FROM") + "\r\n" +
+		"To: " + os.Getenv("EMAIL_TO") + "\r\n" +
+		"Subject: " + os.Getenv("EMAIL_SUBJECT") + "\r\n" +
+		"Content-Type: text/html; charset=UTF-8\r\n" +
+		"\r\n" + os.Getenv("EMAIL_BODY")
 }
