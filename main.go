@@ -52,6 +52,7 @@ func Handler() (Response, error) {
 	}, nil
 }
 
+// OAuth2に必要な設定情報を返す
 func getOAuthConfig() oauth2.Config {
 	return oauth2.Config{
 		ClientID:     os.Getenv("CLIENT_ID"),
@@ -62,6 +63,7 @@ func getOAuthConfig() oauth2.Config {
 	}
 }
 
+// OAuth2に必要なTokenを返す
 func getOAuthToken() oauth2.Token {
 	expiry, _ := time.Parse("2006-01-02", "2018-04-16")
 
@@ -73,6 +75,7 @@ func getOAuthToken() oauth2.Token {
 	}
 }
 
+// Email送信に必要な情報を返す
 func getEmailContent() string {
 	emailDate := time.Now().Format(rfc2822)
 
