@@ -33,6 +33,7 @@ func Handler() (Response, error) {
 	srv, err := gmail.New(client)
 	if err != nil {
 		log.Fatalf("Unable to retrieve gmail Client %v", err)
+		return Response{}, err
 	}
 
 	emailContent := getEmailContent()
@@ -45,6 +46,7 @@ func Handler() (Response, error) {
 	m, err := srv.Users.Messages.Send("me", &message).Do()
 	if err != nil {
 		log.Fatalf("Unable to insert messages. %v", err)
+		return Response{}, err
 	}
 
 	return Response{
