@@ -28,7 +28,7 @@ func main() {
 func Handler() (Response, error) {
 	config := getOAuthConfig()
 	token := getOAuthToken()
-	client := config.Client(context.TODO(), &token)
+	client := config.Client(context.Background(), &token)
 
 	srv, err := gmail.New(client)
 	if err != nil {
